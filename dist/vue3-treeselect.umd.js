@@ -4544,6 +4544,14 @@ var instanceId = 0;
     /**
      * Whether to allow resetting value even if there are disabled selected nodes.
      */
+    // virtual: {
+    //   type: Boolean,
+    //   default: false,
+    // },
+    // virtualRowHeight: {
+    //   type: Number,
+    //   default: 25,
+    // },
     allowClearingDisabled: {
       type: Boolean,
       default: false
@@ -4554,6 +4562,10 @@ var instanceId = 0;
      * You may want to use this in conjunction with `allowClearingDisabled` prop.
      */
     allowSelectingDisabledDescendants: {
+      type: Boolean,
+      default: false
+    },
+    selectAllOption: {
       type: Boolean,
       default: false
     },
@@ -4858,6 +4870,10 @@ var instanceId = 0;
       type: Number,
       default: 300
     },
+    minChar: {
+      type: Number,
+      default: 1
+    },
 
     /**
      * Set `true` to allow selecting multiple options (a.k.a., multi-select mode).
@@ -5113,6 +5129,7 @@ var instanceId = 0;
   },
   data: function data() {
     return {
+      key: 0,
       trigger: {
         // Is the control focused?
         isFocused: false,
@@ -5450,6 +5467,7 @@ var instanceId = 0;
         isRootNode: true,
         isLeaf: true,
         isBranch: false,
+        canSelectChildrenEvenIfDisabled: false,
         isDisabled: false,
         isNew: false,
         index: [-1],
@@ -5565,7 +5583,7 @@ var instanceId = 0;
     },
     isSelected: function isSelected(node) {
       // whether a node is selected (single-select mode) or fully-checked (multi-select mode)
-      return this.forest.selectedNodeMap[node.id] === true;
+      return node && this.forest.selectedNodeMap[node.id] === true;
     },
     traverseDescendantsBFS: function traverseDescendantsBFS(parentNode, callback) {
       // istanbul ignore if
@@ -5735,6 +5753,9 @@ var instanceId = 0;
       var _this12 = this;
 
       var searchQuery = this.trigger.searchQuery;
+
+      var _this66 = this;
+
       var entry = this.getRemoteSearchEntry();
 
       var done = function done() {
@@ -5743,37 +5764,42 @@ var instanceId = 0;
         _this12.resetHighlightedOptionWhenNecessary(true);
       };
 
-      if ((searchQuery === '' || this.cacheOptions) && entry.isLoaded) {
+      console.log(searchQuery, this.minChar);
+
+      if ((searchQuery === "" && this.minChar > 0 || this.cacheOptions) && entry.isLoaded) {
         return done();
       }
 
-      this.callLoadOptionsProp({
-        action: ASYNC_SEARCH,
-        args: {
-          searchQuery: searchQuery
-        },
-        isPending: function isPending() {
-          return entry.isLoading;
-        },
-        start: function start() {
-          entry.isLoading = true;
-          entry.isLoaded = false;
-          entry.loadingError = '';
-        },
-        succeed: function succeed(options) {
-          entry.isLoaded = true;
-          entry.options = options; // When the request completes, the search query may have changed.
-          // We only show these options if they are for the current search query.
+      if (searchQuery.length >= this.minChar) {
+        this.callLoadOptionsProp({
+          action: ASYNC_SEARCH,
+          args: {
+            searchQuery: searchQuery
+          },
+          isPending: function isPending() {
+            return entry.isLoading;
+          },
+          start: function start() {
+            entry.isLoading = true;
+            entry.isLoaded = false;
+            entry.loadingError = '';
+          },
+          succeed: function succeed(options) {
+            entry.isLoaded = true;
+            entry.options = options; // When the request completes, the search query may have changed.
+            // We only show these options if they are for the current search query.
 
-          if (_this12.trigger.searchQuery === searchQuery) done();
-        },
-        fail: function fail(err) {
-          entry.loadingError = getErrorMessage(err);
-        },
-        end: function end() {
-          entry.isLoading = false;
-        }
-      });
+            if (_this12.trigger.searchQuery === searchQuery) done();
+          },
+          fail: function fail(err) {
+            entry.loadingError = getErrorMessage(err);
+          },
+          end: function end() {
+            entry.isLoading = false;
+            _this66.key += 1;
+          }
+        });
+      }
     },
     getRemoteSearchEntry: function getRemoteSearchEntry() {
       var _this13 = this;
@@ -5794,7 +5820,7 @@ var instanceId = 0;
         deep: true
       });
 
-      if (searchQuery === '') {
+      if (searchQuery === '' && this.minChar > 0) {
         if (Array.isArray(this.defaultOptions)) {
           entry.options = this.defaultOptions;
           entry.isLoaded = true;
@@ -5918,6 +5944,8 @@ var instanceId = 0;
       this.$nextTick(this.resetHighlightedOptionWhenNecessary);
       this.$nextTick(this.restoreMenuScrollPosition);
       if (!this.options && !this.async) this.loadRootOptions();
+      console.log(this.minChar);
+      if (this.minChar == 0 && this.async) this.handleRemoteSearch();
       this.toggleClickOutsideEvent(true);
       this.$emit('open', this.getInstanceId());
     },
@@ -5991,12 +6019,13 @@ var instanceId = 0;
         var id = node.id,
             label = node.label,
             children = node.children,
-            isDefaultExpanded = node.isDefaultExpanded;
+            isDefaultExpanded = node.isDefaultExpanded,
+            canSelectChildrenEvenIfDisabled = node.canSelectChildrenEvenIfDisabled;
         var isRootNode = parentNode === NO_PARENT_NODE;
         var level = isRootNode ? 0 : parentNode.level + 1;
         var isBranch = Array.isArray(children) || children === null;
         var isLeaf = !isBranch;
-        var isDisabled = !!node.isDisabled || !_this16.flat && !isRootNode && parentNode.isDisabled;
+        var isDisabled = !!node.isDisabled || !_this16.flat && !isRootNode && parentNode.isDisabled && !parentNode.canSelectChildrenEvenIfDisabled;
         var isNew = !!node.isNew;
 
         var lowerCased = _this16.matchKeys.reduce(function (prev, key) {
@@ -6016,6 +6045,7 @@ var instanceId = 0;
         normalized.lowerCased = lowerCased;
         normalized.nestedSearchLabel = nestedSearchLabel;
         normalized.isDisabled = isDisabled;
+        normalized.canSelectChildrenEvenIfDisabled = canSelectChildrenEvenIfDisabled;
         normalized.isNew = isNew;
         normalized.isMatched = false;
         normalized.isHighlighted = false;
@@ -6361,7 +6391,7 @@ var instanceId = 0;
         var curr = node;
 
         while ((curr = curr.parentNode) !== NO_PARENT_NODE) {
-          if (curr.children.every(this.isSelected)) this.addValue(curr);else break;
+          if (curr.children.every(this.isSelected) && !curr.isDisabled) this.addValue(curr);else break;
         }
       }
     },
@@ -7778,6 +7808,7 @@ var Option = {
 
 
 
+
 function Menuvue_type_script_lang_js_isSlot(s) {
   return typeof s === 'function' || Object.prototype.toString.call(s) === '[object Object]' && !Object(external_commonjs_vue_commonjs2_vue_root_Vue_["isVNode"])(s);
 }
@@ -7813,6 +7844,9 @@ var directionMap = {
       } else {
         this.onMenuClose();
       }
+    },
+    'instance.forest': function instanceForest(newValue) {
+      console.log('instance forest', newValue);
     }
   },
   created: function created() {
@@ -7832,6 +7866,7 @@ var directionMap = {
       var instance = this.instance;
       if (!instance.menu.isOpen) return null;
       return Object(external_commonjs_vue_commonjs2_vue_root_Vue_["createVNode"])("div", {
+        "key": instance.key,
         "ref": "menu",
         "class": "vue-treeselect__menu",
         "onMousedown": instance.handleMouseDown,
@@ -7879,7 +7914,7 @@ var directionMap = {
     renderAsyncSearchMenuInner: function renderAsyncSearchMenuInner() {
       var instance = this.instance;
       var entry = instance.getRemoteSearchEntry();
-      var shouldShowSearchPromptTip = instance.trigger.searchQuery === '' && !instance.defaultOptions;
+      var shouldShowSearchPromptTip = instance.trigger.searchQuery === '' && !instance.defaultOptions && instance.minChar > 0;
       var shouldShowNoResultsTip = shouldShowSearchPromptTip ? false : entry.isLoaded && entry.options.length === 0;
 
       if (shouldShowSearchPromptTip) {
@@ -7899,7 +7934,26 @@ var directionMap = {
       var instance = this.instance;
       return Object(external_commonjs_vue_commonjs2_vue_root_Vue_["createVNode"])("div", {
         "class": "vue-treeselect__list"
-      }, [instance.forest.normalizedOptions.map(function (rootNode) {
+      }, [instance.selectAllOption && Object(external_commonjs_vue_commonjs2_vue_root_Vue_["createVNode"])("div", {
+        "class": "vue-treeselect__list-item"
+      }, [Object(external_commonjs_vue_commonjs2_vue_root_Vue_["createVNode"])("div", {
+        "class": "vue-treeselect__option vue-treeselect__option--selected",
+        "data-id": "-1"
+      }, [Object(external_commonjs_vue_commonjs2_vue_root_Vue_["createVNode"])("div", {
+        "class": "vue-treeselect__option-arrow-placeholder"
+      }, [Object(external_commonjs_vue_commonjs2_vue_root_Vue_["createTextVNode"])("\xA0")]), Object(external_commonjs_vue_commonjs2_vue_root_Vue_["createVNode"])("div", {
+        "class": "vue-treeselect__label-container"
+      }, [Object(external_commonjs_vue_commonjs2_vue_root_Vue_["createVNode"])("div", {
+        "class": "vue-treeselect__checkbox-container"
+      }, [Object(external_commonjs_vue_commonjs2_vue_root_Vue_["createVNode"])("span", {
+        "class": "vue-treeselect__checkbox vue-treeselect__checkbox--checked"
+      }, [Object(external_commonjs_vue_commonjs2_vue_root_Vue_["createVNode"])("span", {
+        "class": "vue-treeselect__check-mark"
+      }, null), Object(external_commonjs_vue_commonjs2_vue_root_Vue_["createVNode"])("span", {
+        "class": "vue-treeselect__minus-mark"
+      }, null)])]), Object(external_commonjs_vue_commonjs2_vue_root_Vue_["createVNode"])("label", {
+        "class": "vue-treeselect__label"
+      }, [Object(external_commonjs_vue_commonjs2_vue_root_Vue_["createTextVNode"])("Tous")])])])]), instance.forest.normalizedOptions.map(function (rootNode) {
         return Object(external_commonjs_vue_commonjs2_vue_root_Vue_["createVNode"])(components_Option, {
           "node": rootNode,
           "key": rootNode.id
