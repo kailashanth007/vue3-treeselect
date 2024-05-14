@@ -751,7 +751,12 @@
   .vue-treeselect__indent-level-@{i} {
     .vue-treeselect__option {
       padding-left: @treeselect-padding + @i * @treeselect-narrow-cell-width;
-
+       & when (@i = 0) {
+        font-weight: bold;
+      }
+      & when (@i > 0) {
+        font-weight: normal;  // Optional: define this if you want a specific style for other levels
+      }
       [dir="rtl"] & {
         padding-left: @treeselect-padding;
         padding-right: @treeselect-padding + @i * @treeselect-narrow-cell-width;
