@@ -1,4 +1,4 @@
-import { noop } from './noop'
+import { noop } from '@/utils/noop'
 
 export const warning = process.env.NODE_ENV === 'production'
   ? /* istanbul ignore next */ noop

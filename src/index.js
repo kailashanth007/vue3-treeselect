@@ -1,9 +1,15 @@
-import Treeselect from './components/Treeselect'
-import treeselectMixin from './mixins/treeselectMixin'
+import Treeselect from '@/components/Treeselect.vue'
 import '../styles/style.less'
+import App from "@/App.vue"
+
+
+import { createApp } from "vue";
+
+const app = createApp(App);
+app.mount("#app");
 
 export default Treeselect
-export { Treeselect, treeselectMixin }
+export { Treeselect }
 export {
   // Delayed loading.
   LOAD_ROOT_OPTIONS,

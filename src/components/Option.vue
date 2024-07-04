@@ -1,23 +1,118 @@
+<template>
+  <div :class="{
+    'vue-treeselect__list-item': true,
+        [`vue-treeselect__indent-level-${instance.shouldFlattenOptions ? 0 : node.level}`]: true,
+    }">
+    <div :class="{
+       'vue-treeselect__option': true,
+          'vue-treeselect__option--disabled': node.isDisabled,
+          'vue-treeselect__option--selected': instance.isSelected(node),
+          'vue-treeselect__option--highlight': node.isHighlighted,
+          'vue-treeselect__option--matched': instance.localSearch.active && node.isMatched,
+          'vue-treeselect__option--hide': !shouldShow,
+    }" @mouseenter="handleMouseEnterOption" :data-id="node.id">
+      <template v-if="!(instance.shouldFlattenOptions && this.shouldShow)">
+        <div v-if="node.isBranch" class="vue-treeselect__option-arrow-container" @mousedown="handleMouseDownOnArrow">
+              <ArrowIcon :class="{
+                  'vue-treeselect__option-arrow': true,
+                  'vue-treeselect__option-arrow--rotated': shouldExpand,
+                }"/>
+        </div>
+        <template v-if="instance.hasBranchNodes">
+          <div class="vue-treeselect__option-arrow-placeholder">&nbsp;</div>
+        </template>
+      </template>
+      <div class="vue-treeselect__label-container" @mousedown="handleMouseDownOnLabelContainer">
+        <template v-if="!isSingle && !(instance.disableBranchNodes && node.isBranch)">
+          <div class="vue-treeselect__checkbox-container">
+            <span :class="{ 'vue-treeselect__checkbox': true,
+          'vue-treeselect__checkbox--checked': checkedState === CHECKED,
+          'vue-treeselect__checkbox--indeterminate': checkedState === INDETERMINATE,
+          'vue-treeselect__checkbox--unchecked': checkedState === UNCHECKED,
+          'vue-treeselect__checkbox--disabled': node.isDisabled, }">
+            <span class="vue-treeselect__check-mark" />
+            <span class="vue-treeselect__minus-mark" />
+          </span>
+          </div>
+        </template>
+          <slot v-if="$slots['option-label']" name="option-label"
+                :node="node"
+                :shouldShowCount="shouldShowCount"
+                :count="getCount()" />
+        <template v-else>
+          <label :class="'vue-treeselect__label'">
+            {{ node.label }}
+            <template v-if="shouldShowCount">
+              <span :class="'vue-treeselect__count'">({ getCount() })</span>
+            </template>
+          </label>
+        </template>
+      </div>
+    </div>
+    <div v-if="node.isBranch && shouldExpand">
+      <Transition name="vue-treeselect__list--transition">
+        <div class="vue-treeselect__list">
+          <template v-if="childrenStatesLoaded">
+            <VueTreeselectOption v-for="childNode in node.children" :node="childNode" :key="childNode.id">
+              <template v-if="$slots['option-label']" #option-label="{ node, shouldShowCount, count }">
+                <slot name="option-label"
+                      :node="node"
+                      :shouldShowCount="shouldShowCount"
+                      :count="count" />
+              </template>
+            </VueTreeselectOption>
+          </template>
+          <template v-else>
+            <template v-if="node.childrenStates.isLoaded && !node.children.length">
+              <Tip type="no-children" icon="warning">{{ instance.noChildrenText }}</Tip>
+            </template>
+            <template v-if="node.childrenStates.isLoading">
+              <Tip type="loading" icon="loader">{{ instance.loadingText }}</Tip>
+            </template>
+            <template v-if="node.childrenStates.loadingError">
+              <Tip type="error" icon="error">
+                { node.childrenStates.loadingError }
+                <a class="vue-treeselect__retry" :title="instance.retryTitle" @mousedown="handleMouseDownOnRetry">
+                  {{ instance.retryText }}
+                </a>
+              </Tip>
+            </template>
+          </template>
+        </div>
+      </Transition>
+    </div>
+  </div>
+</template>
+
+
 <script>
   import { UNCHECKED, INDETERMINATE, CHECKED } from '../constants'
   import { onLeftClick } from '../utils'
-  import Tip from './Tip'
-  import ArrowIcon from './icons/Arrow'
+  import Tip from '@/components/Tip.vue'
+  import ArrowIcon from '@/components/icons/Arrow.vue'
+  import { Transition } from "vue";
 
   let arrowPlaceholder, checkMark, minusMark
 
-  const Option = {
-    name: 'vue-treeselect--option',
+  export default {
+    name: 'VueTreeselectOption',
     inject: [ 'instance' ],
-
+    components: { ArrowIcon, Transition, Tip },
     props: {
       node: {
         type: Object,
         required: true,
       },
     },
-
+    data() {
+      return {
+        UNCHECKED, INDETERMINATE, CHECKED
+      }
+    },
     computed: {
+      isSingle() {
+        return this.instance.single.value;
+      },
       shouldExpand() {
         const { instance, node } = this
 
@@ -28,205 +123,26 @@
         const { instance, node } = this
         return instance.shouldShowOptionInMenu(node)
       },
+      checkedState() {
+        return this.instance.forest.checkedStateMap[this.node.id]
+      },
+      shouldShowCount() {
+        return this.node.isBranch && (this.instance.localSearch.active
+            ? this.instance.showCountOnSearchComputed
+            : this.instance.showCount)
+      },
+      childrenStatesLoaded() {
+        return this.node.childrenStates.isLoaded;
+      }
     },
 
     methods: {
-      renderOption() {
-        const { instance, node } = this
-        const optionClass = {
-          'vue-treeselect__option': true,
-          'vue-treeselect__option--disabled': node.isDisabled,
-          'vue-treeselect__option--selected': instance.isSelected(node),
-          'vue-treeselect__option--highlight': node.isHighlighted,
-          'vue-treeselect__option--matched': instance.localSearch.active && node.isMatched,
-          'vue-treeselect__option--hide': !this.shouldShow,
-        }
-
-        return (
-          <div class={optionClass} onMouseenter={this.handleMouseEnterOption} data-id={node.id}>
-            {this.renderArrow()}
-            {this.renderLabelContainer([
-              this.renderCheckboxContainer([
-                this.renderCheckbox(),
-              ]),
-              this.renderLabel(),
-            ])}
-          </div>
-        )
-      },
-
-      renderSubOptionsList() {
-        if (!this.shouldExpand) return null
-
-        return (
-          <div class="vue-treeselect__list">
-            {this.renderSubOptions()}
-            {this.renderNoChildrenTip()}
-            {this.renderLoadingChildrenTip()}
-            {this.renderLoadingChildrenErrorTip()}
-          </div>
-        )
-      },
-
-      renderArrow() {
-        const { instance, node } = this
-
-        if (instance.shouldFlattenOptions && this.shouldShow) return null
-        if (node.isBranch) {
-
-          const arrowClass = {
-            'vue-treeselect__option-arrow': true,
-            'vue-treeselect__option-arrow--rotated': this.shouldExpand,
-          }
-
-          return (
-            <div class="vue-treeselect__option-arrow-container" onMousedown={this.handleMouseDownOnArrow}>
-              <transition name="vue-treeselect__option-arrow--prepare" appear={true}>
-                <ArrowIcon class={arrowClass} />
-              </transition>
-            </div>
-          )
-        }
-
-        // For leaf nodes, we render a placeholder to keep its label aligned to
-        // branch nodes. Unless there is no branch nodes at all (a normal
-        // non-tree select).
-        if (/*node.isLeaf && */instance.hasBranchNodes) {
-          if (!arrowPlaceholder) arrowPlaceholder = (
-            <div class="vue-treeselect__option-arrow-placeholder">&nbsp;</div>
-          )
-
-          return arrowPlaceholder
-        }
-
-        return null
-      },
-
-      renderLabelContainer(children) {
-        return (
-          <div class="vue-treeselect__label-container" onMousedown={this.handleMouseDownOnLabelContainer}>
-            {children}
-          </div>
-        )
-      },
-
-      renderCheckboxContainer(children) {
-        const { instance, node } = this
-
-        if (instance.single) return null
-        if (instance.disableBranchNodes && node.isBranch) return null
-
-        return (
-          <div class="vue-treeselect__checkbox-container">
-            {children}
-          </div>
-        )
-      },
-
-      renderCheckbox() {
-        const { instance, node } = this
-        const checkedState = instance.forest.checkedStateMap[node.id]
-        const checkboxClass = {
-          'vue-treeselect__checkbox': true,
-          'vue-treeselect__checkbox--checked': checkedState === CHECKED,
-          'vue-treeselect__checkbox--indeterminate': checkedState === INDETERMINATE,
-          'vue-treeselect__checkbox--unchecked': checkedState === UNCHECKED,
-          'vue-treeselect__checkbox--disabled': node.isDisabled,
-        }
-
-        if (!checkMark) checkMark = (
-          <span class="vue-treeselect__check-mark" />
-        )
-        if (!minusMark) minusMark = (
-          <span class="vue-treeselect__minus-mark" />
-        )
-
-        return (
-          <span class={checkboxClass}>
-            {checkMark}
-            {minusMark}
-          </span>
-        )
-      },
-
-      renderLabel() {
-        const { instance, node } = this
-        const shouldShowCount = (
-          node.isBranch && (instance.localSearch.active
-            ? instance.showCountOnSearchComputed
-            : instance.showCount
-          )
-        )
-        const count = shouldShowCount
-          ? instance.localSearch.active
-            ? instance.localSearch.countMap[node.id][instance.showCountOf]
-            : node.count[instance.showCountOf]
-          : NaN
-        const labelClassName = 'vue-treeselect__label'
-        const countClassName = 'vue-treeselect__count'
-        const customLabelRenderer = instance.$slots['option-label']
-
-        if (customLabelRenderer) return customLabelRenderer({
-          node,
-          shouldShowCount,
-          count,
-          labelClassName,
-          countClassName,
-        })
-        return (
-          <label class={labelClassName}>
-            {node.label}
-            {shouldShowCount && (
-              <span class={countClassName}>({count})</span>
-            )}
-          </label>
-        )
-      },
-
-      renderSubOptions() {
-        const { node } = this
-        
-        if (!node.childrenStates.isLoaded) return null
-
-        return node.children.map(childNode => (
-          <vue-treeselect--option node={childNode} key={childNode.id} />
-        ))
-
-      },
-
-      renderNoChildrenTip() {
-        const { instance, node } = this
-
-        if (!node.childrenStates.isLoaded || node.children.length) return null
-
-        return (
-          <Tip type="no-children" icon="warning">{ instance.noChildrenText }</Tip>
-        )
-      },
-
-      renderLoadingChildrenTip() {
-        const { instance, node } = this
-
-        if (!node.childrenStates.isLoading) return null
-
-        return (
-          <Tip type="loading" icon="loader">{ instance.loadingText }</Tip>
-        )
-      },
-
-      renderLoadingChildrenErrorTip() {
-        const { instance, node } = this
-
-        if (!node.childrenStates.loadingError) return null
-
-        return (
-          <Tip type="error" icon="error">
-            { node.childrenStates.loadingError }
-            <a class="vue-treeselect__retry" title={instance.retryTitle} onMousedown={this.handleMouseDownOnRetry}>
-              { instance.retryText }
-            </a>
-          </Tip>
-        )
+      getCount() {
+        return this.shouldShowCount
+            ? this.instance.localSearch.active
+                ? this.instance.localSearch.countMap[this.node.id][this.instance.showCountOf]
+                : this.node.count[this.instance.showCountOf]
+            : NaN
       },
 
       handleMouseEnterOption(evt) {
@@ -259,28 +175,5 @@
         instance.loadChildrenOptions(node)
       }),
     },
-
-    render() {
-      const { node } = this
-      const indentLevel = this.instance.shouldFlattenOptions ? 0 : node.level
-      const listItemClass = {
-        'vue-treeselect__list-item': true,
-        [`vue-treeselect__indent-level-${indentLevel}`]: true,
-      }
-
-      return (
-        <div class={listItemClass}>
-          {this.renderOption()}
-          {node.isBranch ? (
-            <transition name="vue-treeselect__list--transition">
-              {this.renderSubOptionsList()}
-            </transition>
-          ) : ''}
-        </div>
-      )
-    },
   }
-
-  // eslint-disable-next-line vue/require-direct-export
-  export default Option
 </script>
