@@ -1,4 +1,4 @@
-import { defineComponent as Yt, openBlock as p, createElementBlock as v, Fragment as k, renderList as Te, createCommentVNode as C, createElementVNode as O, normalizeClass as I, normalizeStyle as at, toDisplayString as B, resolveComponent as x, renderSlot as A, createTextVNode as K, createBlock as V, createVNode as W, TransitionGroup as In, createSlots as te, withCtx as N, Transition as ut, toRaw as ze, createApp as Xt, ref as Ae, useSlots as Bn, reactive as Vn, computed as D, nextTick as ke, watch as X, onMounted as zn, provide as Fn } from "vue";
+import { defineComponent as Yt, openBlock as p, createElementBlock as v, Fragment as k, renderList as Te, createCommentVNode as C, createElementVNode as O, normalizeClass as I, normalizeStyle as at, toDisplayString as B, resolveComponent as x, renderSlot as A, createTextVNode as K, createBlock as V, createVNode as W, TransitionGroup as In, createSlots as te, withCtx as N, Transition as ut, toRaw as ze, createApp as Xt, ref as Ae, useSlots as Bn, reactive as Vn, computed as D, nextTick as ke, watch as Y, onMounted as zn, provide as Fn } from "vue";
 var Ie = typeof globalThis < "u" ? globalThis : typeof window < "u" ? window : typeof global < "u" ? global : typeof self < "u" ? self : {};
 function ae(e) {
   return e && e.__esModule && Object.prototype.hasOwnProperty.call(e, "default") ? e.default : e;
@@ -112,7 +112,7 @@ function Ps(e, t, r) {
     var L = c, F = d;
     return c = d = void 0, S = E, f = e.apply(F, L), f;
   }
-  function U(E) {
+  function X(E) {
     return S = E, u = setTimeout(i, t), _ ? ne(E) : f;
   }
   function Fe(E) {
@@ -142,7 +142,7 @@ function Ps(e, t, r) {
     var E = st(), L = s(E);
     if (c = arguments, d = this, g = E, L) {
       if (u === void 0)
-        return U(g);
+        return X(g);
       if (T)
         return clearTimeout(u), u = setTimeout(i, t), ne(g);
     }
@@ -1834,7 +1834,7 @@ const Hr = /* @__PURE__ */ H(Vr, [["render", Fr]]), Wr = {
       isLoading: !1,
       loadingError: ""
     }), _ = (n) => typeof n == "string" ? n : typeof n == "number" && !ln(n) ? n + "" : "", T = (n, l, a) => n ? $n(l, a) : ee(a, l), z = (n) => n.message || /* istanbul ignore next */
-    String(n), ne = () => s.modelValue == null ? [] : s.valueFormat === "id" ? s.multiple ? s.modelValue.slice() : [s.modelValue] : (s.multiple ? s.modelValue : [s.modelValue]).map((n) => Se(n)).map((n) => n.id), U = t, Fe = Bn(), s = e, i = Vn({
+    String(n), ne = () => s.modelValue == null ? [] : s.valueFormat === "id" ? s.multiple ? s.modelValue.slice() : [s.modelValue] : (s.multiple ? s.modelValue : [s.modelValue]).map((n) => Se(n)).map((n) => n.id), X = t, Fe = Bn(), s = e, i = Vn({
       trigger: {
         // Is the control focused?
         isFocused: !1,
@@ -1900,7 +1900,7 @@ const Hr = /* @__PURE__ */ H(Vr, [["render", Fr]]), Wr = {
       verifyProps: dt,
       resetFlags: ht,
       initialize: ie,
-      getInstanceId: q,
+      getInstanceId: U,
       getValue: ft,
       getNode: w,
       createFallbackNode: pt,
@@ -2094,7 +2094,7 @@ const Hr = /* @__PURE__ */ H(Vr, [["render", Fr]]), Wr = {
         i.remoteSearch[a] = Ne();
       } else
         i.forest.normalizedOptions = [];
-    }, q = () => f, ft = () => {
+    }, U = () => f, ft = () => {
       if (s.valueFormat === "id")
         return s.multiple ? $.value.slice() : $.value[0];
       const n = $.value.map((l) => w(l).raw);
@@ -2259,9 +2259,9 @@ const Hr = /* @__PURE__ */ H(Vr, [["render", Fr]]), Wr = {
     }, Ye = () => {
       i.trigger.searchQuery = "";
     }, ce = () => {
-      !i.menu.isOpen || !s.disabled && s.alwaysOpen || (Lt(), i.menu.isOpen = !1, je(!1), Ye(), U("close", ft(), q()));
+      !i.menu.isOpen || !s.disabled && s.alwaysOpen || (Lt(), i.menu.isOpen = !1, je(!1), Ye(), X("close", ft(), U()));
     }, ge = () => {
-      s.disabled || i.menu.isOpen || (i.menu.isOpen = !0, ke(ve), ke(Mt), !s.options && !s.async && Xe(), je(!0), U("open", q()));
+      s.disabled || i.menu.isOpen || (i.menu.isOpen = !0, ke(ve), ke(Mt), !s.options && !s.async && Xe(), je(!0), X("open", U()));
     }, Mn = () => {
       i.menu.isOpen ? ce() : ge();
     }, Rn = (n) => {
@@ -2282,17 +2282,17 @@ const Hr = /* @__PURE__ */ H(Vr, [["render", Fr]]), Wr = {
       })), i.forest.checkedStateMap = l;
     }, Se = (n) => ({
       ...n,
-      ...s.normalizer(n, q())
+      ...s.normalizer(n, U())
     }), Le = (n, l, a) => {
       let m = l.map((h) => [Se(h), h]).map(([h, b], oe) => {
         Et(h), Tt(h);
-        const { id: Y, label: Re, children: P, isDefaultExpanded: be } = h, re = n === le, Rt = re ? 0 : n.level + 1, et = Array.isArray(P) || P === null, tt = !et, xt = !!h.isDisabled || !s.flat && !re && n.isDisabled, An = !!h.isNew, nt = s.matchKeys.reduce((M, xe) => ({
+        const { id: q, label: Re, children: P, isDefaultExpanded: be } = h, re = n === le, Rt = re ? 0 : n.level + 1, et = Array.isArray(P) || P === null, tt = !et, xt = !!h.isDisabled || !s.flat && !re && n.isDisabled, An = !!h.isNew, nt = s.matchKeys.reduce((M, xe) => ({
           ...M,
           [xe]: _(h[xe]).toLocaleLowerCase()
         }), {}), kn = re ? nt.label : n.nestedSearchLabel + " " + nt.label;
-        i.forest.nodeMap[Y] = j();
-        const y = i.forest.nodeMap[Y];
-        if (y.id = Y, y.label = Re, y.level = Rt, y.ancestors = re ? [] : [n].concat(n.ancestors), y.index = (re ? [] : n.index).concat(oe), y.parentNode = n, y.lowerCased = nt, y.nestedSearchLabel = kn, y.isDisabled = xt, y.isNew = An, y.isMatched = !1, y.isHighlighted = !1, y.isBranch = et, y.isLeaf = tt, y.isRootNode = re, y.raw = b, et) {
+        i.forest.nodeMap[q] = j();
+        const y = i.forest.nodeMap[q];
+        if (y.id = q, y.label = Re, y.level = Rt, y.ancestors = re ? [] : [n].concat(n.ancestors), y.index = (re ? [] : n.index).concat(oe), y.parentNode = n, y.lowerCased = nt, y.nestedSearchLabel = kn, y.isDisabled = xt, y.isNew = An, y.isMatched = !1, y.isHighlighted = !1, y.isBranch = et, y.isLeaf = tt, y.isRootNode = re, y.raw = b, et) {
           const M = Array.isArray(P);
           y.childrenStates = { ...S(), isLoaded: M }, y.isExpanded = typeof be == "boolean" ? be : Rt < s.defaultExpandLevel, y.hasMatchedDescendants = !1, y.hasDisabledDescendants = !1, y.isExpandedOnSearch = !1, y.showAllChildrenOnSearch = !1, y.count = {
             [ue]: 0,
@@ -2306,8 +2306,8 @@ const Hr = /* @__PURE__ */ H(Vr, [["render", Fr]]), Wr = {
             () => 'Unloaded branch node detected. "loadOptions" prop is required to load its children.'
           ) : !M && y.isExpanded && Ge(y);
         }
-        if (y.ancestors.forEach((M) => M.count[Oe]++), tt && y.ancestors.forEach((M) => M.count[Ee]++), re || (n.count[ue] += 1, tt && (n.count[we] += 1), xt && (n.hasDisabledDescendants = !0)), a && a[Y]) {
-          const M = a[Y];
+        if (y.ancestors.forEach((M) => M.count[Oe]++), tt && y.ancestors.forEach((M) => M.count[Ee]++), re || (n.count[ue] += 1, tt && (n.count[we] += 1), xt && (n.hasDisabledDescendants = !0)), a && a[q]) {
+          const M = a[q];
           y.isMatched = M.isMatched, y.showAllChildrenOnSearch = M.showAllChildrenOnSearch, y.isHighlighted = M.isHighlighted, M.isBranch && y.isBranch && (y.isExpanded = M.isExpanded, y.isExpandedOnSearch = M.isExpandedOnSearch, M.childrenStates.isLoaded && !y.childrenStates.isLoaded ? y.isExpanded = !1 : y.childrenStates = { ...M.childrenStates });
         }
         return y;
@@ -2366,19 +2366,19 @@ const Hr = /* @__PURE__ */ H(Vr, [["render", Fr]]), Wr = {
       if (!s.loadOptions || a())
         return;
       m();
-      const Y = po((P, be) => {
+      const q = po((P, be) => {
         P ? b(P) : h(be), oe();
       }), Re = s.loadOptions({
-        id: q(),
-        instanceId: q(),
+        id: U(),
+        instanceId: U(),
         action: n,
         ...l,
-        callback: Y
+        callback: q
       });
       an(Re) && Re.then(() => {
-        Y();
+        q();
       }, (P) => {
-        Y(P);
+        q(P);
       }).catch((P) => {
         console.error(P);
       });
@@ -2397,11 +2397,11 @@ const Hr = /* @__PURE__ */ H(Vr, [["render", Fr]]), Wr = {
         return;
       L.value && Je();
       const l = s.multiple && !s.flat ? i.forest.checkedStateMap[n.id] === ct : !Q(n);
-      l ? Dt(n) : Nt(n), ye(), U(l ? "select" : "deselect", n.raw, q()), i.localSearch.active && l && (L.value || s.clearOnSelect) && Ye(), L.value && s.closeOnSelect && (ce(), s.searchable && (i._blurOnSelect = !0)), U("update:modelValue", s.multiple ? i.forest.selectedNodeIds : i.forest.selectedNodeIds[0] || null);
+      l ? Dt(n) : Nt(n), ye(), X(l ? "select" : "deselect", n.raw, U()), i.localSearch.active && l && (L.value || s.clearOnSelect) && Ye(), L.value && s.closeOnSelect && (ce(), s.searchable && (i._blurOnSelect = !0)), X("update:modelValue", s.multiple ? i.forest.selectedNodeIds : i.forest.selectedNodeIds[0] || null);
     }, Je = () => {
       E.value && (L.value || s.allowClearingDisabled ? i.forest.selectedNodeIds = [] : i.forest.selectedNodeIds = i.forest.selectedNodeIds.filter(
         (n) => w(n).isDisabled
-      ), ye(), U("update:modelValue", null));
+      ), ye());
     }, Dt = (n) => {
       if (L.value || s.disableBranchNodes)
         return G(n);
@@ -2486,26 +2486,26 @@ const Hr = /* @__PURE__ */ H(Vr, [["render", Fr]]), Wr = {
         }
       });
     };
-    return X(Sn, (n) => {
+    return Y(Sn, (n) => {
       n ? ge() : ce();
-    }), X(bn, () => {
+    }), Y(bn, () => {
       ie();
-    }), X(_n, (n) => {
+    }), Y(_n, (n) => {
       n && i.menu.isOpen ? ce() : !n && !i.menu.isOpen && s.alwaysOpen && ge();
-    }), X(On, () => {
+    }), Y(On, () => {
       ie();
-    }), X(wn, () => {
+    }), Y(wn, () => {
       ie();
-    }), X(En, (n) => {
+    }), Y(En, (n) => {
       n && ye();
-    }), X(Tn, () => {
+    }), Y(Tn, () => {
       s.async || (ie(), i.rootOptionsStates.isLoaded = Array.isArray(s.options));
     }, {
       deep: !0,
       immediate: !0
-    }), X(gn, () => {
-      s.async ? Ze() : bt(), U("search-change", i.trigger.searchQuery, q());
-    }), X(yn, () => {
+    }), Y(gn, () => {
+      s.async ? Ze() : bt(), X("search-change", i.trigger.searchQuery, U());
+    }), Y(yn, () => {
       const n = ne();
       Oo(n, $.value) && We(n);
     }), zn(() => {

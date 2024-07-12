@@ -1776,7 +1776,7 @@ const clear = () => {
       )
     }
     buildForestState()
-    emit('update:modelValue', null);
+    //emit('update:modelValue', null);
   }
 };
 const _selectNode = (node) => {

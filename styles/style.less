@@ -355,6 +355,7 @@
 .vue-treeselect__control {
   .row();
 
+  display: table;
   height: @treeselect-control-height;
   border: @treeselect-control-border-width solid @treeselect-control-border-color;
   border-radius: @treeselect-control-border-radius;
@@ -467,13 +468,13 @@
   display: flex;
   flex-flow: row;
   justify-content: space-between;
-  background: @treeselect-multi-value-item-bg;
+  // background: @treeselect-multi-value-item-bg;
   // Table elements do not have margin, so we set at the container element.
   padding: @treeselect-multi-value-margin-y @treeselect-multi-value-margin-x;
   padding-left: 5px;
   border: @treeselect-multi-value-item-border-width solid @treeselect-multi-value-item-border-color;
   border-radius: @treeselect-border-radius-sm;
-  color: @treeselect-multi-value-font-color;
+  // color: @treeselect-multi-value-font-color;
   font-size: @treeselect-multi-value-font-size;
   vertical-align: top; // stylelint-disable-line plugin/declaration-block-no-ignored-properties
 
@@ -481,7 +482,7 @@
     .clickable();
 
     background: @treeselect-multi-value-item-bg-hover;
-    color: @treeselect-multi-value-font-color-hover;
+    // color: @treeselect-multi-value-font-color-hover;
   }
 
   &.vue-treeselect__multi-value-item-disabled {
@@ -518,7 +519,7 @@
 }
 
 .vue-treeselect__value-remove {
-  color: @treeselect-multi-value-remove-color;
+  // color: @treeselect-multi-value-remove-color;
   border-left: 1px solid @treeselect-multi-value-divider-color;
   line-height: 0;
   margin-left: 5px;

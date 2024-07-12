@@ -1,6 +1,6 @@
 {
   "name": "jaze-vue3-treeselect",
-  "version": "0.1.6",
+  "version": "0.1.7",
   "description": "Tree select hierarchical component for vue 3 (next)",
   "main": "dist/r2rka-vue3-treeselect.mjs",
   "unpkg": "dist/r2rka-vue3-treeselect.umd.js",
