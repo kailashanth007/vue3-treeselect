@@ -1,5 +1,5 @@
 import watchSizeForBrowsersOtherThanIE9 from 'watch-size'
-import { removeFromArray } from '@/utils/removeFromArray'
+import { removeFromArray } from './removeFromArray'
 
 let intervalId
 const registered = []

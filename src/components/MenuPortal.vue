@@ -1,11 +1,7 @@
-<template>
-  <div class="vue-treeselect__menu-placeholder" />
-</template>
-
 <script>
   import {createApp} from 'vue'
   import { watchSize, setupResizeAndScrollEventListeners, find } from '../utils'
-  import Menu from '@/components/Menu.vue'
+  import Menu from './Menu'
 
   const PortalTarget = {
     name: 'vue-treeselect--portal-target',
@@ -117,6 +113,18 @@
       },
     },
 
+    render() {
+      const { instance } = this
+      const portalTargetClass = [ 'vue-treeselect__portal-target', instance.wrapperClass ]
+      const portalTargetStyle = { zIndex: instance.zIndex }
+
+      return (
+        <div class={portalTargetClass} style={portalTargetStyle} data-instance-id={instance.getInstanceId()}>
+          <Menu ref="menu" />
+        </div>
+      )
+    },
+
     unmounted() {
       this.removeHandlers()
     },
@@ -144,7 +152,7 @@
         const el = document.createElement('div')
         document.body.appendChild(el)
         this.portalTarget = createApp({
-
+          
           parent: this,
           ...PortalTarget,
         });
@@ -163,6 +171,14 @@
         this.portalTarget.$destroy()
         this.portalTarget = null
       },
+    },
+
+    render() {
+      if (!placeholder) placeholder = (
+        <div class="vue-treeselect__menu-placeholder" />
+      )
+
+      return placeholder
     },
   }
 </script>
