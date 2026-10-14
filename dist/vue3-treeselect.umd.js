@@ -10672,9 +10672,6 @@ const Treeselect_exports_ = /*#__PURE__*/(0,exportHelper_namespaceFn().A)(Treese
 
 
 
-
-// TEMP: remove after verifying the new build is used.
-console.log('[jaze-vue3-treeselect] virtual scrolling build loaded');
 /* harmony default export */ var src_0 = (Treeselect);
 
 
