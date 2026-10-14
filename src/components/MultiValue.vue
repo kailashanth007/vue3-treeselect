@@ -1,4 +1,4 @@
-<script>
+<script lang="jsx">
   import MultiValueItem from './MultiValueItem'
   import Input from './Input'
   import Placeholder from './Placeholder'

@@ -1,4 +1,5 @@
 import fuzzysearch from 'fuzzysearch'
+import { toRaw, isReactive, reactive } from 'vue'
 
 import {
   warning,
@@ -630,6 +631,31 @@ export default {
     },
 
     /**
+     * Enable virtual scrolling: only the options inside the visible area of the menu are rendered.
+     * Recommended for large option lists. Every row must have the same height (see `virtualRowHeight`).
+     */
+    virtual: {
+      type: Boolean,
+      default: false,
+    },
+
+    /**
+     * Height (in px) of each row when `virtual` is enabled.
+     */
+    virtualRowHeight: {
+      type: Number,
+      default: 28,
+    },
+
+    /**
+     * Number of extra rows rendered above and below the visible area when `virtual` is enabled.
+     */
+    virtualBuffer: {
+      type: Number,
+      default: 10,
+    },
+
+    /**
      * z-index of the menu.
      */
     zIndex: {
@@ -777,6 +803,40 @@ export default {
       })
 
       return visibleOptionIds
+    },
+    /**
+     * Flat list of rows displayed in the menu, used for virtual scrolling.
+     * Contains the visible options (see `visibleOptionIds`) plus the tips shown inside
+     * expanded branch nodes (no children / loading / loading error), in display order.
+     * @type {{type: string, key: string, node: node}[]}
+     */
+    virtualRows() {
+      const rows = []
+      const walk = nodes => {
+        nodes.forEach(node => {
+          if (!this.localSearch.active || this.shouldOptionBeIncludedInSearchResult(node)) {
+            rows.push({ type: 'option', key: `option-${node.id}`, node })
+          }
+          if (!node.isBranch || !this.shouldExpand(node)) return
+
+          walk(node.children)
+
+          const { childrenStates } = node
+          if (childrenStates.isLoaded && node.children.length === 0) {
+            rows.push({ type: 'no-children', key: `no-children-${node.id}`, node })
+          }
+          if (childrenStates.isLoading) {
+            rows.push({ type: 'loading', key: `loading-${node.id}`, node })
+          }
+          if (childrenStates.loadingError) {
+            rows.push({ type: 'error', key: `error-${node.id}`, node })
+          }
+        })
+      }
+
+      walk(this.forest.normalizedOptions)
+
+      return rows
     },
     /**
      * Has any option should be displayed in the menu?
@@ -1388,6 +1448,7 @@ export default {
       if (this.menu.isOpen && scroll) {
         const scrollToOption = () => {
           const $menu = this.getMenu()
+          if (this.virtual) return this.scrollToVirtualRow($menu, node)
           const $option = $menu.querySelector(`.vue-treeselect__option[data-id="${node.id}"]`)
           if ($option) scrollIntoView($menu, $option)
         }
@@ -1399,6 +1460,24 @@ export default {
           // istanbul ignore next
           this.$nextTick(scrollToOption)
         }
+      }
+    },
+
+    scrollToVirtualRow($menu, node) {
+      // With virtual scrolling the option may not be rendered yet,
+      // so compute its position from the row index instead of querying the DOM.
+      if (!$menu) return
+      const index = this.virtualRows.findIndex(row => row.type === 'option' && row.node.id === node.id)
+      if (index === -1) return
+
+      const $list = $menu.querySelector('.vue-treeselect__list--virtual')
+      const rowTop = ($list ? $list.offsetTop : 0) + index * this.virtualRowHeight
+      const rowBottom = rowTop + this.virtualRowHeight
+
+      if (rowTop < $menu.scrollTop) {
+        $menu.scrollTop = rowTop
+      } else if (rowBottom > $menu.scrollTop + $menu.clientHeight) {
+        $menu.scrollTop = rowBottom - $menu.clientHeight
       }
     },
 
@@ -1526,8 +1605,15 @@ export default {
     },
 
     normalize(parentNode, nodes, prevNodeMap) {
+      // Nodes are built as plain objects and written to the raw node map: writing every
+      // property through Vue's reactive proxies is very slow for large trees.
+      // They become reactive as soon as they are read through `this.forest`.
+      const nodeMap = toRaw(this.forest.nodeMap)
+      prevNodeMap = toRaw(prevNodeMap)
+
       let normalizedOptions = nodes
-        .map(node => [ this.enhancedNormalizer(node), node ])
+        // Read the source node without its reactive proxy (if any), but keep the original as `raw`.
+        .map(node => [ this.enhancedNormalizer(toRaw(node)), node ])
         .map(([ node, raw ], index) => {
           this.checkDuplication(node)
           this.verifyNodeShape(node)
@@ -1548,9 +1634,8 @@ export default {
             : parentNode.nestedSearchLabel + ' ' + lowerCased.label
 
           // this.$ set(this.forest.nodeMap, id, createMap())
-          this.forest.nodeMap[id] = createMap();
-
-          const normalized = this.forest.nodeMap[id];
+          const normalized = createMap();
+          nodeMap[id] = normalized;
 
           normalized.id = id;
           normalized.label = label;
@@ -1627,7 +1712,9 @@ export default {
             // this.$ set(normalized, 'children', isLoaded
             //   ? this.normalize(normalized, children, prevNodeMap)
             //   : [])
-            normalized.children = isLoaded ? this.normalize(normalized, children, prevNodeMap) :[];
+            // Keep children of reactive source nodes reactive, so their `raw` stays a reactive proxy as before.
+            const childNodes = isLoaded && isReactive(raw) ? reactive(children) : children
+            normalized.children = isLoaded ? this.normalize(normalized, childNodes, prevNodeMap) :[];
 
             if (isDefaultExpanded === true) normalized.ancestors.forEach(ancestor => {
               ancestor.isExpanded = true

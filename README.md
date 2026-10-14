@@ -129,6 +129,22 @@ If you just don't want to use webpack or any other bundlers, you can simply incl
 </html>
 ```
 
+### Virtual scrolling (large option lists)
+
+With thousands of options, rendering every option up front makes the menu slow to open. Enable `virtual` to render only the rows inside the visible area of the menu:
+
+```vue
+<treeselect v-model="value" :options="options" virtual :virtual-row-height="25" />
+```
+
+| Prop | Type | Default | Description |
+| --- | --- | --- | --- |
+| `virtual` | `Boolean` | `false` | Render only the options inside the visible area of the menu. |
+| `virtualRowHeight` | `Number` | `28` | Height (in px) of every row. All rows get this fixed height, so long labels are truncated instead of wrapping. |
+| `virtualBuffer` | `Number` | `10` | Number of extra rows rendered above and below the visible area. |
+
+Searching, keyboard navigation, expanding/collapsing and delayed loading work as usual. The `option-label` slot is supported as long as it fits in `virtualRowHeight`.
+
 ### Documentation for vue 2 & Live Demo. Be careful with breaking changes above.
 
 [Visit the website](https://vue-treeselect.js.org/)

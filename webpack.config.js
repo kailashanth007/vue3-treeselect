@@ -1,6 +1,5 @@
 // webpack config
 const path = require('path');
-const WebpackBar = require('webpackbar');
 const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
@@ -34,13 +33,10 @@ module.exports = (env = {}) => ([
       {
         test: /\.(sass|scss|css)$/,
         use: [
-          {
-            loader: MiniCssExtractPlugin.loader,
-            options: { hmr: !env.production }
-          },
+          MiniCssExtractPlugin.loader,
           {
             loader: "css-loader",
-            query: {
+            options: {
               importLoaders: 1
             }
           },
@@ -48,7 +44,7 @@ module.exports = (env = {}) => ([
           {
             loader: 'sass-loader',
             options: {
-              sourceMap: !env.production,
+              sourceMap: true, // required by resolve-url-loader
             }
           }
         ],
@@ -57,13 +53,10 @@ module.exports = (env = {}) => ([
       {
         test: /\.(less)$/,
         use: [
-          {
-            loader: MiniCssExtractPlugin.loader,
-            options: { hmr: !env.production }
-          },
+          MiniCssExtractPlugin.loader,
           {
             loader: "css-loader",
-            query: {
+            options: {
               importLoaders: 1
             }
           },
@@ -71,7 +64,7 @@ module.exports = (env = {}) => ([
           {
             loader: 'less-loader',
             options: {
-              sourceMap: !env.production,
+              sourceMap: true, // required by resolve-url-loader
             }
           }
         ],
@@ -81,7 +74,6 @@ module.exports = (env = {}) => ([
         test: /\.vue$/,
         loader: 'vue-loader',
         options: {
-          getCustomTransformers: () => ({ before: [tsNameof] }),
           productionMode: !!env.production,
         }
       },
@@ -135,11 +127,11 @@ module.exports = (env = {}) => ([
       filename: '[name].css',
 
     }),
-    new WebpackBar(),
     new VueLoaderPlugin(),
     new DefinePlugin({
-      __VUE_OPTIONS_API__:false,
-      __VUE_PROD_DEVTOOLS__:true
+      __VUE_OPTIONS_API__: true,
+      __VUE_PROD_DEVTOOLS__: !env.production,
+      __VUE_PROD_HYDRATION_MISMATCH_DETAILS__: false
     })
   ],
 

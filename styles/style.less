@@ -1152,3 +1152,20 @@
   overflow: visible;
   box-sizing: border-box;
 }
+
+/**
+ * Virtual scrolling
+ */
+
+.vue-treeselect__list--virtual {
+  position: relative;
+
+  .vue-treeselect__list-item {
+    overflow: hidden;
+  }
+
+  .vue-treeselect__option,
+  .vue-treeselect__tip {
+    height: 100%;
+  }
+}

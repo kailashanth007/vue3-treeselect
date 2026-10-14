@@ -1,4 +1,4 @@
-<script>
+<script lang="jsx">
   import { UNCHECKED, INDETERMINATE, CHECKED } from '../constants'
   import { onLeftClick } from '../utils'
   import Tip from './Tip'
@@ -14,6 +14,11 @@
       node: {
         type: Object,
         required: true,
+      },
+      // Render as a single row of a virtual list (without nested children).
+      virtual: {
+        type: Boolean,
+        default: false,
       },
     },
 
@@ -78,6 +83,13 @@
             'vue-treeselect__option-arrow': true,
             'vue-treeselect__option-arrow--rotated': this.shouldExpand,
           }
+
+          // Rows of a virtual list are mounted while scrolling, skip the appear transition.
+          if (this.virtual) return (
+            <div class="vue-treeselect__option-arrow-container" onMousedown={this.handleMouseDownOnArrow}>
+              <ArrowIcon class={arrowClass} />
+            </div>
+          )
 
           return (
             <div class="vue-treeselect__option-arrow-container" onMousedown={this.handleMouseDownOnArrow}>
@@ -266,6 +278,14 @@
       const listItemClass = {
         'vue-treeselect__list-item': true,
         [`vue-treeselect__indent-level-${indentLevel}`]: true,
+      }
+
+      if (this.virtual) {
+        return (
+          <div class={listItemClass} style={{ height: this.instance.virtualRowHeight + 'px' }}>
+            {this.renderOption()}
+          </div>
+        )
       }
 
       return (

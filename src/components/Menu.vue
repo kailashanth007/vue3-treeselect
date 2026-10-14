@@ -1,6 +1,6 @@
-<script>
+<script lang="jsx">
   import { MENU_BUFFER } from '../constants'
-  import { watchSize, setupResizeAndScrollEventListeners } from '../utils'
+  import { watchSize, setupResizeAndScrollEventListeners, onLeftClick } from '../utils'
   import Option from './Option'
   import Tip from './Tip'
 
@@ -15,6 +15,15 @@
     name: 'vue-treeselect--menu',
     inject: [ 'instance' ],
 
+    data() {
+      return {
+        // Index of the first row inside the visible area of the menu (virtual scrolling).
+        virtualFirstRow: 0,
+        // Height of the visible area of the menu (virtual scrolling).
+        virtualViewportHeight: this.instance.maxHeight,
+      }
+    },
+
     computed: {
       menuStyle() {
         const { instance } = this
@@ -22,6 +31,13 @@
         return {
           maxHeight: instance.maxHeight + 'px',
         }
+      },
+
+      virtualRowCount() {
+        const { instance } = this
+
+        // Only computed when virtual scrolling is enabled.
+        return instance.virtual ? instance.virtualRows.length : 0
       },
 
       menuContainerStyle() {
@@ -41,6 +57,11 @@
         } else {
           this.onMenuClose()
         }
+      },
+
+      virtualRowCount() {
+        // The list may have shrunk (e.g. when searching), re-measure after rendering.
+        if (this.instance.virtual) this.$nextTick(this.updateVirtualScroll)
       },
     },
 
@@ -66,7 +87,7 @@
         if (!instance.menu.isOpen) return null
 
         return (
-          <div ref="menu" class="vue-treeselect__menu" onMousedown={instance.handleMouseDown} style={this.menuStyle}>
+          <div ref="menu" class="vue-treeselect__menu" onMousedown={instance.handleMouseDown} onScroll={this.handleMenuScroll} style={this.menuStyle}>
             {this.renderBeforeList()}
             {instance.async
               ? this.renderAsyncSearchMenuInner()
@@ -150,6 +171,8 @@
       renderOptionList() {
         const { instance } = this
 
+        if (instance.virtual) return this.renderVirtualOptionList()
+
         return (
           <div class="vue-treeselect__list">
             {instance.forest.normalizedOptions.map(rootNode => (
@@ -157,6 +180,90 @@
             ))}
           </div>
         )
+      },
+
+      renderVirtualOptionList() {
+        const { instance } = this
+        const rows = instance.virtualRows
+        const rowHeight = instance.virtualRowHeight
+        const visibleCount = Math.ceil(this.virtualViewportHeight / rowHeight) + 1
+        // Clamp in case the list has shrunk since the last scroll measurement.
+        const firstRow = Math.min(this.virtualFirstRow, Math.max(0, rows.length - visibleCount))
+        const start = Math.max(0, firstRow - instance.virtualBuffer)
+        const end = Math.min(rows.length, firstRow + visibleCount + instance.virtualBuffer)
+
+        return (
+          <div ref="virtual-list" class="vue-treeselect__list vue-treeselect__list--virtual" style={{ height: rows.length * rowHeight + 'px' }}>
+            <div class="vue-treeselect__virtual-window" style={{ transform: `translateY(${start * rowHeight}px)` }}>
+              {rows.slice(start, end).map(this.renderVirtualRow)}
+            </div>
+          </div>
+        )
+      },
+
+      renderVirtualRow(row) {
+        const { instance } = this
+
+        if (row.type === 'option') {
+          return <Option node={row.node} key={row.key} virtual={true} />
+        }
+
+        // Tips are indented one level deeper than their parent branch node (see styles).
+        const indentLevel = instance.shouldFlattenOptions ? 0 : row.node.level
+
+        return (
+          <div
+            class={`vue-treeselect__list-item vue-treeselect__indent-level-${indentLevel}`}
+            key={row.key}
+            style={{ height: instance.virtualRowHeight + 'px' }}
+          >
+            {this.renderVirtualTip(row)}
+          </div>
+        )
+      },
+
+      renderVirtualTip({ type, node }) {
+        const { instance } = this
+
+        if (type === 'no-children') {
+          return <Tip type="no-children" icon="warning">{ instance.noChildrenText }</Tip>
+        }
+        if (type === 'loading') {
+          return <Tip type="loading" icon="loader">{ instance.loadingText }</Tip>
+        }
+
+        return (
+          <Tip type="error" icon="error">
+            { node.childrenStates.loadingError }
+            <a class="vue-treeselect__retry" title={instance.retryTitle} onMousedown={evt => this.handleMouseDownOnRetry(evt, node)}>
+              { instance.retryText }
+            </a>
+          </Tip>
+        )
+      },
+
+      handleMouseDownOnRetry: onLeftClick(function handleMouseDownOnRetry(evt, node) {
+        this.instance.loadChildrenOptions(node)
+      }),
+
+      handleMenuScroll() {
+        if (this.instance.virtual) this.updateVirtualScroll()
+      },
+
+      updateVirtualScroll() {
+        const $menu = this.$refs.menu
+        const $list = this.$refs['virtual-list']
+        if (!$menu || !$list) return
+
+        // Offset of the list inside the menu (menu padding, "before-list" slot).
+        const scrollTopInList = Math.max(0, $menu.scrollTop - $list.offsetTop)
+        const firstRow = Math.floor(scrollTopInList / this.instance.virtualRowHeight)
+
+        // Only update when needed, to avoid re-rendering on every scroll event.
+        if (firstRow !== this.virtualFirstRow) this.virtualFirstRow = firstRow
+        if ($menu.clientHeight && $menu.clientHeight !== this.virtualViewportHeight) {
+          this.virtualViewportHeight = $menu.clientHeight
+        }
       },
 
       renderSearchPromptTip() {
@@ -220,6 +327,7 @@
       },
 
       onMenuOpen() {
+        if (this.instance.virtual) this.updateVirtualScroll()
         this.adjustMenuOpenDirection()
         this.setupMenuSizeWatcher()
         this.setupMenuResizeAndScrollEventListeners()

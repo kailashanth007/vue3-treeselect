@@ -1,4 +1,4 @@
-<script>
+<script lang="jsx">
   import {createApp} from 'vue'
   import { watchSize, setupResizeAndScrollEventListeners, find } from '../utils'
   import Menu from './Menu'
